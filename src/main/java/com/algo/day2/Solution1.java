@@ -6,6 +6,7 @@ import java.util.PriorityQueue;
 import java.util.function.Function;
 
 /*
+TODO: 복습
 문제 설명
 
 문제 설명
@@ -51,6 +52,23 @@ public class Solution1 {
     public static int solution(int[] depth, int money, Function<Integer, Integer> excavate) {
         for(int i = 1; i <= depth.length; i++)
             if (excavate.apply(i) == 0) return i;
+
+        int[][] dp = new int[depth.length][depth.length];
+
+        for(int i=0; i<depth.length; i++)
+            dp[i][i] = depth[i];
+
+        for(int i=0; i<depth.length; i++){
+            for(int j=i+1; j<depth.length; j++){
+                for(int k=i; k<=j; k++){
+                    if(i > 0) dp[i][j] = depth[k] + Math.min(dp[i][k-1], dp[k+1][j]);
+
+                }
+            }
+        }
+
+
+
         return 0;
     }
 }
