@@ -1,5 +1,14 @@
 package com.algo.day4;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.Buffer;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
 /*
 문제: 회식 자리 배치
 
@@ -60,4 +69,72 @@ A[3][2] + A[2][1] + A[1][4]
 하지만 최적 배치는 더 높은 점수를 만들 수 있다.
  */
 public class Solution2 {
+    static final int NEG_INF = -1_000_000_000;
+
+    public static void main(String[] args) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st;
+
+        int N = Integer.parseInt(br.readLine());
+
+        int[][] A = new int[N][N];
+
+        for (int i = 0; i < N; i++) {
+            st = new StringTokenizer(br.readLine());
+            for (int j = 0; j < N; j++) {
+                A[i][j] = Integer.parseInt(st.nextToken());
+            }
+        }
+
+        int M = Integer.parseInt(br.readLine());
+
+        boolean[][] banned = new boolean[N][N];
+
+        for (int i = 0; i < M; i++) {
+            st = new StringTokenizer(br.readLine());
+            int u = Integer.parseInt(st.nextToken()) - 1;
+            int v = Integer.parseInt(st.nextToken()) - 1;
+
+            banned[u][v] = true;
+            banned[v][u] = true;
+        }
+
+        int full = (1 << N) - 1;
+
+        int[][] dp = new int[1 << N][N];
+
+        for (int i = 0; i < (1 << N); i++) {
+            Arrays.fill(dp[i], NEG_INF);
+        }
+
+        for (int i = 0; i < N; i++) {
+            dp[1 << i][i] = 0;
+        }
+
+        for (int mask = 0; mask <= full; mask++) {
+            for (int last = 0; last < N; last++) {
+                if (dp[mask][last] == NEG_INF) continue;
+
+                for (int next = 0; next < N; next++) {
+                    if ((mask & (1 << next)) != 0) continue;
+                    if (banned[last][next]) continue;
+
+                    int nextMask = mask | (1 << next);
+
+                    dp[nextMask][next] = Math.max(
+                        dp[nextMask][next],
+                        dp[mask][last] + A[last][next]
+                    );
+                }
+            }
+        }
+
+        int answer = NEG_INF;
+
+        for (int last = 0; last < N; last++) {
+            answer = Math.max(answer, dp[full][last]);
+        }
+
+        System.out.println(answer == NEG_INF ? -1 : answer);
+    }
 }
