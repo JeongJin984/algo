@@ -1,0 +1,66 @@
+답지
+---Solution1---
+public class Solution1 {
+    static int N, L;
+    static long X;
+    static long[] prefix;
+
+    public static void main(String[] args) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        N = Integer.parseInt(st.nextToken());
+        X = Long.parseLong(st.nextToken());
+        L = Integer.parseInt(st.nextToken());
+
+        prefix = new long[N + 1];
+
+        st = new StringTokenizer(br.readLine());
+        for (int i = 1; i <= N; i++) {
+            long value = Long.parseLong(st.nextToken());
+            prefix[i] = prefix[i - 1] + value;
+        }
+
+        Map<Long, ArrayList<Integer>> map = new HashMap<>();
+
+        for (int i = 0; i <= N; i++) {
+            map.computeIfAbsent(prefix[i], k -> new ArrayList<>()).add(i);
+        }
+
+        long answer = 0;
+
+        for (int r = 1; r <= N; r++) {
+            long target = prefix[r] - X;
+            int maxLeftPrefixIndex = r - L;
+
+            if (maxLeftPrefixIndex < 0) continue;
+
+            ArrayList<Integer> list = map.get(target);
+            if (list == null) continue;
+
+            answer += upperBound(list, maxLeftPrefixIndex);
+        }
+
+        System.out.println(answer);
+    }
+
+    static int upperBound(ArrayList<Integer> list, int target) {
+        int left = 0;
+        int right = list.size();
+
+        while (left < right) {
+            int mid = (left + right) / 2;
+
+            if (list.get(mid) <= target) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+
+        return left;
+    }
+}
+
+---Solution2---
+
