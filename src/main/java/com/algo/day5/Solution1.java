@@ -3,10 +3,7 @@ package com.algo.day5;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /*
 문제: 구독 서비스 정산하기
@@ -51,4 +48,48 @@ A1 A2 A3 ... AN
 4
  */
 public class Solution1 {
+    static int N, L;
+    static long X;
+    static long[] A;
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st = new StringTokenizer(br.readLine());
+
+        N = Integer.parseInt(st.nextToken());
+        X = Long.parseLong(st.nextToken());
+        L = Integer.parseInt(st.nextToken());
+
+        A = new long[N+1];
+        st = new StringTokenizer(br.readLine());
+        for(int i = 1; i <= N; i++) {
+            A[i] = Long.parseLong(st.nextToken());
+        }
+
+        long[] sumA = new long[N+1];
+        sumA[0] = 0;
+        for(int i = 1; i <= N; i++) {
+            sumA[i] = sumA[i - 1] + A[i];
+        }
+
+
+        // X = S[l,r] = S(r) - S(l-1)
+        // S(l-1) = S(r) - X, l-1은 sumA의 인덱스
+        // 1 <= l <= r - L + 1 (null,1,2,3,4 -> 0,1,3,6,10 / 길이2, r=3, 최대 l=2 S(3)-S(2),)
+        // 이러면 Map에 S(i)->i 로 카운팅 맵을 만들고 S(l-1)의 개수 출력
+        int answer = 0;
+        Map<Long, Long> countMap = new HashMap<>();
+        for(int r=1; r<=N; r++) {
+            int maxSumALeft = r - L;
+            if(maxSumALeft >= 0) {
+                long sumA_maxLeft = sumA[maxSumALeft]; // 현재 r에서 새롭게 허용되는 가장 오른쪽 시작점(l)에 대응하는 sumA 값
+                countMap.put(sumA_maxLeft, countMap.getOrDefault(sumA_maxLeft, 0L) + 1); // 위 값의 개수(최단구간 합)
+            }
+
+            long target = sumA[r] - X;
+            answer += countMap.getOrDefault(target, 0L); // S[r]-X = S(l-1) 값을 가지는 S[0...r-L]가 몇 개 있는가?
+        }
+
+        System.out.println(answer);
+    }
 }
