@@ -109,17 +109,17 @@ S_i ≠ E_i
 
 2번 장소에서 물건을 받을 수는 있지만, 물건을 전달해야 하는 4번 장소로 이동할 수 없다.
  */
-class Solution1 {
+public class Solution1 {
 
     static final long INF = Long.MAX_VALUE / 4;
 
     static int N, M, K, C;
 
-    static List<Road>[] graph;
+    static List<Edge>[] graph;
 
-    static int[] start;
-    static int[] end;
-    static int[] important;
+    // pickup[i]   : i번 심부름의 물건을 받는 장소
+    // delivery[i] : i번 심부름의 물건을 전달하는 장소
+    static int[][] errand;
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(
@@ -144,240 +144,76 @@ class Solution1 {
 
             int a = Integer.parseInt(st.nextToken());
             int b = Integer.parseInt(st.nextToken());
-            int time = Integer.parseInt(st.nextToken());
+            int cost = Integer.parseInt(st.nextToken());
 
-            graph[a].add(new Road(b, time));
-            graph[b].add(new Road(a, time));
+            graph[a].add(new Edge(b, cost));
+            graph[b].add(new Edge(a, cost));
         }
 
-        start = new int[K];
-        end = new int[K];
-
-        int importantCount = 2 * K + 1;
-        important = new int[importantCount];
-
-        important[0] = 1;
+        errand = new int[K][2];
 
         for (int i = 0; i < K; i++) {
             st = new StringTokenizer(br.readLine());
-
-            start[i] = Integer.parseInt(st.nextToken());
-            end[i] = Integer.parseInt(st.nextToken());
-
-            important[1 + i] = start[i];
-            important[1 + K + i] = end[i];
+            errand[i] = new int[]{Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken())};
         }
 
-        long[][] specialDist =
-            new long[importantCount][importantCount];
-
-        for (int i = 0; i < importantCount; i++) {
-            long[] dist = dijkstra(important[i]);
-
-            for (int j = 0; j < importantCount; j++) {
-                specialDist[i][j] = dist[important[j]];
-            }
+        List<long[]> distances = new ArrayList<>();
+        distances.add(dijkstra(new Node(1, 0)));
+        for(int i=0; i<K; i++) {
+            distances.add(dijkstra(new Node(errand[i][0], 0)));
         }
-
-        long answer = solve(specialDist);
-
-        System.out.println(answer >= INF ? -1 : answer);
+        for(int i=0; i<K; i++) {
+            distances.add(dijkstra(new Node(errand[i][1], 0)));
+        }
     }
 
-    static long solve(long[][] specialDist) {
-        int[] pow3 = new int[K + 1];
-        pow3[0] = 1;
+    static long[] dijkstra(Node start) {
+        long[] distance = new long[N + 1];
+        Arrays.fill(distance, INF);
 
-        for (int i = 1; i <= K; i++) {
-            pow3[i] = pow3[i - 1] * 3;
-        }
+        PriorityQueue<Node> pq = new PriorityQueue<>(
+            Comparator.comparingLong(node -> node.cost)
+        );
 
-        int stateCount = pow3[K];
-        int finalState = stateCount - 1;
-        int positionCount = 2 * K + 1;
-
-        int[] carryingCount = new int[stateCount];
-
-        for (int state = 0; state < stateCount; state++) {
-            int value = state;
-
-            for (int i = 0; i < K; i++) {
-                int status = value % 3;
-
-                if (status == 1) {
-                    carryingCount[state]++;
-                }
-
-                value /= 3;
-            }
-        }
-
-        long[] dist =
-            new long[stateCount * positionCount];
-
-        Arrays.fill(dist, INF);
-
-        PriorityQueue<DeliveryState> pq =
-            new PriorityQueue<>(
-                Comparator.comparingLong(node -> node.cost)
-            );
-
-        dist[0] = 0;
-        pq.offer(new DeliveryState(0, 0, 0));
+        distance[start.idx] = 0;
+        pq.offer(start);
 
         while (!pq.isEmpty()) {
-            DeliveryState cur = pq.poll();
+            Node current = pq.poll();
 
-            int curIndex =
-                cur.state * positionCount + cur.position;
-
-            if (dist[curIndex] != cur.cost) {
+            if (distance[current.idx] < current.cost) {
                 continue;
             }
 
-            int carrying = carryingCount[cur.state];
+            for (Edge edge : graph[current.idx]) {
+                long nextCost = current.cost + edge.cost;
 
-            for (int i = 0; i < K; i++) {
-                int status =
-                    (cur.state / pow3[i]) % 3;
-
-                int nextState;
-                int nextPosition;
-
-                if (status == 0) {
-                    if (carrying >= C) {
-                        continue;
-                    }
-
-                    nextState = cur.state + pow3[i];
-                    nextPosition = 1 + i;
-
-                } else if (status == 1) {
-                    nextState = cur.state + pow3[i];
-                    nextPosition = 1 + K + i;
-
-                } else {
-                    continue;
-                }
-
-                long moveCost =
-                    specialDist[cur.position][nextPosition];
-
-                if (moveCost >= INF) {
-                    continue;
-                }
-
-                long nextCost = cur.cost + moveCost;
-
-                int nextIndex =
-                    nextState * positionCount + nextPosition;
-
-                if (nextCost < dist[nextIndex]) {
-                    dist[nextIndex] = nextCost;
-
-                    pq.offer(new DeliveryState(
-                        nextState,
-                        nextPosition,
-                        nextCost
-                    ));
+                if (nextCost < distance[edge.to]) {
+                    distance[edge.to] = nextCost;
+                    pq.offer(new Node(edge.to, nextCost));
                 }
             }
         }
 
-        long answer = INF;
-
-        for (int position = 0;
-             position < positionCount;
-             position++) {
-
-            long currentCost =
-                dist[finalState * positionCount + position];
-
-            long homeCost =
-                specialDist[position][0];
-
-            if (currentCost >= INF || homeCost >= INF) {
-                continue;
-            }
-
-            answer = Math.min(
-                answer,
-                currentCost + homeCost
-            );
-        }
-
-        return answer;
+        return distance;
     }
 
-    static long[] dijkstra(int source) {
-        long[] dist = new long[N + 1];
-        Arrays.fill(dist, INF);
-
-        PriorityQueue<PathState> pq =
-            new PriorityQueue<>(
-                Comparator.comparingLong(node -> node.cost)
-            );
-
-        dist[source] = 0;
-        pq.offer(new PathState(source, 0));
-
-        while (!pq.isEmpty()) {
-            PathState cur = pq.poll();
-
-            if (dist[cur.vertex] != cur.cost) {
-                continue;
-            }
-
-            for (Road road : graph[cur.vertex]) {
-                long nextCost =
-                    cur.cost + road.cost;
-
-                if (nextCost < dist[road.to]) {
-                    dist[road.to] = nextCost;
-
-                    pq.offer(new PathState(
-                        road.to,
-                        nextCost
-                    ));
-                }
-            }
-        }
-
-        return dist;
-    }
-
-    static class Road {
+    static class Edge {
         int to;
         int cost;
 
-        Road(int to, int cost) {
+        public Edge(int to, int cost) {
             this.to = to;
             this.cost = cost;
         }
     }
 
-    static class PathState {
-        int vertex;
+    static class Node {
+        int idx;
         long cost;
 
-        PathState(int vertex, long cost) {
-            this.vertex = vertex;
-            this.cost = cost;
-        }
-    }
-
-    static class DeliveryState {
-        int state;
-        int position;
-        long cost;
-
-        DeliveryState(
-            int state,
-            int position,
-            long cost
-        ) {
-            this.state = state;
-            this.position = position;
+        public Node(int idx, long cost) {
+            this.idx = idx;
             this.cost = cost;
         }
     }
