@@ -42,9 +42,10 @@ public class Solution1 {
         K = Integer.parseInt(st.nextToken());
 
         long left = 1;
-        long right = N*N;
+        long right = K;
 
         // 그리고 그 값이 count(x) >= K를 만족하는 최초의 값, 즉 B[K]입니다. 즉 lower_bound
+        long answer = 0;
         while (left < right) {
             long mid = left + (right - left) / 2;
 
@@ -52,12 +53,13 @@ public class Solution1 {
 
             if (count < K) {
                 left = mid + 1;
+                answer = left;
             } else {
                 right = mid;
             }
         }
 
-        System.out.println(left);
+        System.out.println(answer);
     }
 
     // 배열에서 value 이하인 숫자의 개수
