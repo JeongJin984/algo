@@ -1,0 +1,84 @@
+---
+
+---
+
+public class Solution2 {
+    static int N;
+    static int M;
+    static int K;
+
+    static int[][] map;
+
+    static int[] di = new int[] {0, 0, 1, -1};
+    static int[] dj = new int[] {1, -1, 0, 0};
+
+    static final int DAY = 0;
+    static final int NIGHT = 1;
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st = new  StringTokenizer(br.readLine());
+
+        N = Integer.parseInt(st.nextToken());
+        M = Integer.parseInt(st.nextToken());
+        K = Integer.parseInt(st.nextToken());
+
+        map = new int[N][M];
+        for(int i = 0; i < N; i++){
+            String s = br.readLine();
+            for(int j = 0; j < M; j++){
+                map[i][j] = s.charAt(j) - '0';
+            }
+        }
+
+        int[][][][] distance = new int[N][M][K+1][2];
+
+        for(int i = 0; i < N; i++){
+            for(int j = 0; j < M; j++){
+                for(int k = 0; k <= K; k++){
+                    distance[i][j][k][DAY] = Integer.MAX_VALUE;
+                    distance[i][j][k][NIGHT] = Integer.MAX_VALUE;
+                }
+            }
+        }
+
+        Queue<int[]> q = new ArrayDeque<>();
+        q.offer(new int[]{0,0,0,0,1}); // i좌표, j좌표, 벽갯수, 밤낮, 거리
+        distance[0][0][0][DAY] = 1;
+        while(!q.isEmpty()){
+            int[] cur = q.poll();
+
+            if(cur[0] == N-1 && cur[1] == M-1) {
+                System.out.println(cur[4]);
+                return;
+            }
+
+            for(int i = 0; i<4; i++) {
+                int[] next = new int[] {cur[0] + di[i], cur[1] + dj[i], cur[2], (cur[3] + 1) % 2, cur[4] + 1};
+
+                if(next[0]<0 || next[0]>=N || next[1]<0 || next[1]>=M) continue;
+                if(map[next[0]][next[1]] == 0) {
+                    if(distance[next[0]][next[1]][next[2]][next[3]] <= next[4]) continue;
+                    distance[next[0]][next[1]][next[2]][next[3]] = next[4];
+                    q.offer(next);
+                } else {
+                    if(cur[2] >= K) continue;
+                    if(cur[3] == DAY) {
+                        next[2]++;
+                        if(distance[next[0]][next[1]][next[2]][next[3]] <= next[4]) continue;
+                        distance[next[0]][next[1]][next[2]][next[3]] = next[4];
+                        q.offer(next);
+                    } else  {
+                        next = new int[] {cur[0], cur[1], cur[2], (cur[3] + 1) % 2,  cur[4] + 1};
+                        if(distance[next[0]][next[1]][next[2]][next[3]] <= next[4]) continue;
+                        distance[next[0]][next[1]][next[2]][next[3]] = next[4];
+                        q.offer(next);
+                    }
+                }
+            }
+        }
+        System.out.println(-1);
+    }
+}
+
+----
