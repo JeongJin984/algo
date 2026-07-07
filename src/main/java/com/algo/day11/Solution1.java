@@ -2,6 +2,7 @@ package com.algo.day11;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -47,61 +48,57 @@ W[i][j]: 도시 i에서 도시 j로 이동하는 비용
 35
  */
 public class Solution1 {
-    static final int INF = 1_000_000_000;
-
     static int N;
     static int[][] W;
-    static int[][] dp;
-    static int allVisited;
-
-    static int dfs(int current, int visited) {
-        // 모든 도시를 방문했다면 출발 도시로 복귀
-        if (visited == allVisited) {
-            if (W[current][0] == 0) return INF;
-            return W[current][0];
-        }
-
-        // 이미 계산한 상태
-        if (dp[current][visited] != -1) return dp[current][visited];
-
-        int minCost = INF;
-
-        for (int next = 0; next < N; next++) {
-            // 길이 없는 경우
-            if (W[current][next] == 0) continue;
-
-            // 이미 방문한 도시
-            if ((visited & (1 << next)) != 0) continue;
-
-            int nextCost = dfs(next, visited | (1 << next));
-
-            if (nextCost == INF) continue;
-
-            minCost = Math.min(minCost, W[current][next] + nextCost);
-        }
-
-        return dp[current][visited] = minCost;
-    }
+    static final int INF = 1_000_000_000;
 
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new java.io.InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
-        N = Integer.parseInt(st.nextToken());
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
+        N = Integer.parseInt(br.readLine());
         W = new int[N][N];
-        for(int i=0; i<N; i++) {
-            st = new StringTokenizer(br.readLine());
-            for(int j=0; j<N; j++) {
+
+        for (int i = 0; i < N; i++) {
+            StringTokenizer st = new StringTokenizer(br.readLine());
+            for (int j = 0; j < N; j++) {
                 W[i][j] = Integer.parseInt(st.nextToken());
             }
         }
 
-        dp = new int[N][(1 << N)];
+        int[][] dp = new int[1 << N][N];
 
-        for (int i = 0; i < N; i++) {
-            Arrays.fill(dp[i], -1);
+        for (int i = 0; i < (1 << N); i++) {
+            Arrays.fill(dp[i], INF);
         }
 
-        System.out.println(dfs(0, 1));
+        dp[1][0] = 0; // 0번 도시에서 시작, 0번만 방문
+
+        for (int mask = 0; mask < (1 << N); mask++) {
+            for (int cur = 0; cur < N; cur++) {
+                if (dp[mask][cur] == INF) continue;
+
+                for (int next = 0; next < N; next++) {
+                    if ((mask & (1 << next)) != 0) continue; // 이미 방문
+                    if (W[cur][next] == 0) continue;         // 길 없음
+
+                    int nextMask = mask | (1 << next);
+                    dp[nextMask][next] = Math.min(
+                        dp[nextMask][next],
+                        dp[mask][cur] + W[cur][next]
+                    );
+                }
+            }
+        }
+
+        int fullMask = (1 << N) - 1;
+        int answer = INF;
+
+        for (int last = 1; last < N; last++) {
+            if (W[last][0] == 0) continue; // 시작 도시로 복귀 불가
+
+            answer = Math.min(answer, dp[fullMask][last] + W[last][0]);
+        }
+
+        System.out.println(answer);
     }
 }

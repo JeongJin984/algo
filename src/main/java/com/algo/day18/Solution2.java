@@ -69,7 +69,7 @@ public class Solution2 {
         Arrays.sort(gem, Comparator.comparingInt(a -> a[0]));
         Arrays.sort(bag);
 
-        PriorityQueue<Integer> pq = new PriorityQueue<>(Collections.reverseOrder());
+        PriorityQueue<Integer> pq = new PriorityQueue<>(Collections.reverseOrder()); // 현재 가방에 넣을 수 있는 gem의 후보군
 
         long answer = 0;
         int idx = 0;
